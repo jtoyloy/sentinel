@@ -3,6 +3,9 @@ from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 from app.core.config import settings
 from app.models.models import Base
+from app.models import auth
+from app.platform import register_domains
+register_domains()
 
 
 def migrate(connection):

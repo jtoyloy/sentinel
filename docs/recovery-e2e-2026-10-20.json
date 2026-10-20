@@ -1,0 +1,130 @@
+{
+  "started_at": "2026-10-20T16:43:22.973182+00:00",
+  "namespace": "sentinel_fault_3a04d895cb11",
+  "isolated_api_port": 8001,
+  "isolated_redis_port": 6387,
+  "checks": [
+    {
+      "name": "isolated baseline replay",
+      "at": "2026-10-20T16:43:26.855265+00:00",
+      "stats": {
+        "events": 4,
+        "alerts": 1,
+        "open_alerts": 1,
+        "critical_alerts": 0
+      },
+      "outbox_pending": 0,
+      "cursor": "1792514606714-0",
+      "stream_length": 4,
+      "stream_last_id": "1792514606714-0",
+      "worker": {
+        "name": "detection-v1",
+        "last_success": "2026-10-20T16:43:26.768432+00:00",
+        "last_failure": null,
+        "processed": 4,
+        "failures": 0,
+        "last_error": null
+      }
+    },
+    {
+      "name": "Redis outage retains committed source and pending outbox",
+      "at": "2026-10-20T16:43:27.028238+00:00",
+      "health_http_status": 503,
+      "stats": {
+        "events": 8,
+        "alerts": 1,
+        "open_alerts": 1,
+        "critical_alerts": 0
+      },
+      "outbox_pending": 4
+    },
+    {
+      "name": "same-AOF Redis restart recovers pending work",
+      "at": "2026-10-20T16:43:28.172717+00:00",
+      "stats": {
+        "events": 8,
+        "alerts": 2,
+        "open_alerts": 2,
+        "critical_alerts": 0
+      },
+      "outbox_pending": 0,
+      "cursor": "1792514607999-0",
+      "stream_length": 8,
+      "stream_last_id": "1792514607999-0",
+      "worker": {
+        "name": "detection-v1",
+        "last_success": "2026-10-20T16:43:28.044512+00:00",
+        "last_failure": "2026-10-20T16:43:26.968358+00:00",
+        "processed": 8,
+        "failures": 1,
+        "last_error": "ConnectionError"
+      }
+    },
+    {
+      "name": "actual stream rebuild preserves source and deduplicates alerts",
+      "at": "2026-10-20T16:43:28.427189+00:00",
+      "recovery": {
+        "mode": "REBUILD_STREAM",
+        "events_requeued": 8
+      },
+      "stats": {
+        "events": 8,
+        "alerts": 2,
+        "open_alerts": 2,
+        "critical_alerts": 0
+      },
+      "outbox_pending": 0,
+      "cursor": "1792514608204-0",
+      "stream_length": 16,
+      "stream_last_id": "1792514608204-0",
+      "worker": {
+        "name": "detection-v1",
+        "last_success": "2026-10-20T16:43:28.265372+00:00",
+        "last_failure": "2026-10-20T16:43:26.968358+00:00",
+        "processed": 24,
+        "failures": 1,
+        "last_error": "ConnectionError"
+      }
+    },
+    {
+      "name": "poison message persisted, retried three times and quarantined without blocking later events",
+      "at": "2026-10-20T16:43:30.688647+00:00",
+      "quarantine": {
+        "id": "008668cb-f36e-45bf-b06a-9ade9ce4523f",
+        "stream_id": "1792514608427-0",
+        "payload": {
+          "source": "isolated-fault-smoke",
+          "event_id": "not-a-valid-uuid"
+        },
+        "error": "ValueError",
+        "attempts": 3,
+        "status": "QUARANTINED",
+        "created_at": "2026-10-20T16:43:28.437015+00:00"
+      },
+      "stats": {
+        "events": 12,
+        "alerts": 3,
+        "open_alerts": 3,
+        "critical_alerts": 0
+      },
+      "outbox_pending": 0,
+      "cursor": "1792514609456-0",
+      "stream_length": 21,
+      "stream_last_id": "1792514609456-0",
+      "worker": {
+        "name": "detection-v1",
+        "last_success": "2026-10-20T16:43:30.501183+00:00",
+        "last_failure": "2026-10-20T16:43:29.466985+00:00",
+        "processed": 29,
+        "failures": 3,
+        "last_error": "ValueError"
+      }
+    }
+  ],
+  "status": "PASSED",
+  "database_dropped": true,
+  "child_processes_stopped": true,
+  "finished_at": "2026-10-20T16:43:31.083883+00:00",
+  "duration_seconds": 8.111,
+  "evidence_scope": "Local synthetic validation against real PostgreSQL/Redis/FastAPI; not a production certification"
+}

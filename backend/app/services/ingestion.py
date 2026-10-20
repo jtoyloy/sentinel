@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.models import TradingEvent, EventOutbox
+from app.models.models import TradingEvent, EventOutbox, Base
+from app.domains.employees import enrich_event
 from app.models.schemas import TradingEventCreate, TradingEventResponse
 
 
@@ -20,14 +21,25 @@ class IngestionService:
                 stored = TradingEventCreate(**{
                     **data.model_dump(),
                     **{k: getattr(existing, k) for k in data.model_fields if k not in ('metadata',)},
-                    "metadata": existing.event_metadata,
+                    "metadata": existing.source_metadata if existing.source_metadata is not None else existing.event_metadata,
                 })
                 if stored != data:
                     raise ValueError("event_id already exists with different content")
                 results.append(existing)
                 continue
             fields = data.model_dump(exclude={"metadata", "event_id"})
-            event = TradingEvent(**fields, event_metadata=data.metadata)
+            enrichment = await enrich_event(db, fields)
+            # Client assertions are preserved as source evidence, but cannot impersonate
+            # trusted enrichment when identity/security resolution has no match.
+            reserved = {"employee_id", "department", "role", "security"}
+            metadata = {key: value for key, value in data.metadata.items() if key not in reserved}
+            metadata.update(enrichment)
+            if "securities" in Base.metadata.tables:
+                from app.domains.data import Security, row
+                security = await db.get(Security, data.instrument_id)
+                if security:
+                    metadata["security"] = row(security)
+            event = TradingEvent(**fields, source_metadata=data.metadata, event_metadata=metadata)
             if data.event_id:
                 event.event_id = data.event_id
             db.add(event)
@@ -40,11 +52,13 @@ class IngestionService:
         return [TradingEventResponse.model_validate(e) for e in results]
 
     async def get_events(self, db, instrument_id=None, trader_id=None, from_time=None,
-                         to_time=None, limit=100, offset=0):
+                         to_time=None, limit=100, offset=0, replay_run_id=None):
         query = select(TradingEvent)
         for field, value in ((TradingEvent.instrument_id, instrument_id), (TradingEvent.trader_id, trader_id)):
             if value:
                 query = query.where(field == value)
+        if replay_run_id:
+            query = query.where(TradingEvent.event_metadata["replay_run_id"].as_string() == str(replay_run_id))
         if from_time:
             query = query.where(TradingEvent.timestamp >= from_time)
         if to_time:

@@ -5,7 +5,7 @@ ensures multiple API processes cannot advance the shared cursor concurrently.
 """
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from uuid import UUID
 from sqlalchemy import select, text
 from app.core.database import async_session_maker, engine
@@ -41,6 +41,12 @@ async def process_event(db, event_id):
         alert = await service.create_alert_from_detection(db, detection)
         if alert:
             created.append(alert)
+    if event.event_type == "EXECUTION":
+        from app.domains.communications import correlate_event
+        from app.platform import serialize
+        from fastapi.encoders import jsonable_encoder
+        for signal in await correlate_event(db, event):
+            created.append({"type": "SIGNAL", **jsonable_encoder(serialize(signal))})
     return created
 
 
@@ -54,12 +60,31 @@ async def consume_once(db, broadcast):
     count = 0
     for _, messages in batches:
         for stream_id, payload in messages:
-            alerts = await process_event(db, payload["event_id"])
+            try:
+                alerts = await process_event(db, payload.get("event_id"))
+            except (ValueError, TypeError) as error:
+                # Invalid stream references are preserved and retried, then quarantined.
+                # Dependency/database errors are not quarantined and never advance cursor.
+                from app.platform import StreamFailure
+                await db.rollback()
+                cursor = await db.get(StreamCursor, "detection-v1")
+                failure = await db.scalar(select(StreamFailure).where(StreamFailure.stream_id == stream_id))
+                if failure:
+                    failure.attempts += 1
+                else:
+                    failure = StreamFailure(stream_id=stream_id, payload=payload,
+                                            error=type(error).__name__, attempts=1)
+                    db.add(failure)
+                if failure.attempts < 3:
+                    await db.commit()
+                    raise ValueError("Invalid stream reference retained for retry") from error
+                failure.status = "QUARANTINED"
+                alerts = []
             cursor.last_id = stream_id
             # Alerts and cursor advance atomically. Repeat delivery is deduplicated.
             await db.commit()
             for alert in alerts:
-                await broadcast({"type": "ALERT", **alert.model_dump(mode="json")})
+                await broadcast(alert if isinstance(alert, dict) else {"type": "ALERT", **alert.model_dump(mode="json")})
             count += 1
     return count
 
@@ -79,13 +104,34 @@ async def run_pipeline(broadcast):
                     while True:
                         async with async_session_maker() as db:
                             await publish_outbox(db)
-                            await consume_once(db, broadcast)
+                            processed = await consume_once(db, broadcast)
+                            from app.platform import WorkerHeartbeat
+                            heartbeat = await db.get(WorkerHeartbeat, "detection-v1")
+                            if heartbeat is None:
+                                heartbeat = WorkerHeartbeat(name="detection-v1", processed=0, failures=0)
+                                db.add(heartbeat)
+                            heartbeat.last_success = datetime.now(timezone.utc)
+                            heartbeat.processed += processed
+                            await db.commit()
                         await asyncio.sleep(0.05)
                 finally:
                     if engine.dialect.name == "postgresql":
                         await lock_conn.execute(text("SELECT pg_advisory_unlock(73921811)"))
         except asyncio.CancelledError:
             raise
-        except Exception:
+        except Exception as error:
+            try:
+                from app.platform import WorkerHeartbeat
+                async with async_session_maker() as db:
+                    heartbeat = await db.get(WorkerHeartbeat, "detection-v1")
+                    if heartbeat is None:
+                        heartbeat = WorkerHeartbeat(name="detection-v1", processed=0, failures=0)
+                        db.add(heartbeat)
+                    heartbeat.last_failure = datetime.now(timezone.utc)
+                    heartbeat.failures += 1
+                    heartbeat.last_error = type(error).__name__
+                    await db.commit()
+            except Exception:
+                logger.error("Could not persist worker failure heartbeat")
             logger.exception("Pipeline delivery failed; retrying persisted work")
             await asyncio.sleep(1)

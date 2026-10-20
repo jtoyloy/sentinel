@@ -1,0 +1,74 @@
+{
+  "namespace": "E2E-42db24f2ecdd",
+  "started_at": "2026-10-20T16:39:22.971830+00:00",
+  "checks": [
+    "authentication and viewer mutation denial",
+    "HR feed quality, profile persistence, simulator, identity and idempotency",
+    "trusted employee enrichment overrides source claims; unknown identity cannot forge enrichment",
+    "email/chat preservation, normal negative control and correlation in both arrival orders",
+    "versioned policies, BLOCK/REVIEW/ALLOW and independent exemption approval",
+    "cross-domain investigation escalation, closure and authenticated audit attribution",
+    "broker normalization/idempotency/quality, three-way reconciliation and hashed CSV audit",
+    "WebSocket authentication, live persisted wash alert/evidence and logout revocation",
+    "actual pending recovery, worker restart and duplicate event/alert prevention"
+  ],
+  "artifacts": {
+    "csv": ".runtime/e2e-42db24f2ecdd-trades.csv",
+    "csv_sha256": "fbead3bad16f635931e598eb1276c3a59f007f6af1b5a3f91369fbb73969260a",
+    "export_rows": 189
+  },
+  "initial_stats": {
+    "events": 452,
+    "alerts": 11,
+    "open_alerts": 11,
+    "critical_alerts": 6
+  },
+  "final_stats": {
+    "events": 469,
+    "alerts": 12,
+    "open_alerts": 12,
+    "critical_alerts": 6
+  },
+  "operations_before": {
+    "postgres": true,
+    "redis": true,
+    "worker_healthy": true,
+    "outbox_pending": 0,
+    "stream_length": 469,
+    "cursor": "1792514365764-0",
+    "worker": {
+      "name": "detection-v1",
+      "last_success": "2026-10-20T16:39:25.827092+00:00",
+      "last_failure": null,
+      "processed": 17,
+      "failures": 0,
+      "last_error": null
+    },
+    "events": 469,
+    "stream_failures": [],
+    "feed_issue_count": 2
+  },
+  "operations_after": {
+    "postgres": true,
+    "redis": true,
+    "worker_healthy": true,
+    "outbox_pending": 0,
+    "stream_length": 469,
+    "cursor": "1792514365764-0",
+    "worker": {
+      "name": "detection-v1",
+      "last_success": "2026-10-20T16:39:25.827092+00:00",
+      "last_failure": null,
+      "processed": 17,
+      "failures": 0,
+      "last_error": null
+    },
+    "events": 469,
+    "stream_failures": [],
+    "feed_issue_count": 2
+  },
+  "finished_at": "2026-10-20T16:39:25.872449+00:00",
+  "duration_seconds": 2.901,
+  "status": "PASSED",
+  "evidence_scope": "Local synthetic validation against real PostgreSQL/Redis/FastAPI; not a production certification"
+}

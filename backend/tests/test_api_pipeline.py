@@ -205,7 +205,7 @@ async def test_evidence_audit_stats_filters_and_pagination(harness):
             assert (await client.get("/api/stats")).json()["open_alerts"] == len(all_alerts) - 1
     history = (await client.get(f"/api/alerts/{alert_id}/history")).json()
     assert [(row["previous_status"], row["new_status"]) for row in history] == [("OPEN", "INVESTIGATING"), ("INVESTIGATING", "RESOLVED"), ("RESOLVED", "OPEN")]
-    assert all(row["actor"] == "analyst@example.com" and row["notes"] for row in history)
+    assert all(row["actor"] == "legacy-test-investigator" and row["notes"] for row in history)
     invalid = await client.patch(f"/api/alerts/{alert_id}", json={"status": "DELETED", "actor": "analyst", "notes": "invalid"})
     assert invalid.status_code == 422
     assert len((await client.get(f"/api/alerts/{alert_id}/history")).json()) == 3

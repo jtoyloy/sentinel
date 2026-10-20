@@ -38,6 +38,7 @@ class TradingEvent(Base):
     price = Column(Numeric(20, 8), nullable=False)
     order_id = Column(String(100), nullable=False)
     parent_order_id = Column(String(100), nullable=True)
+    source_metadata = Column(JSON().with_variant(JSONB, "postgresql"), nullable=True)
     event_metadata = Column(JSON().with_variant(JSONB, "postgresql"), default=dict)
     created_at = Column(UTCDateTime(), default=datetime.utcnow)
 

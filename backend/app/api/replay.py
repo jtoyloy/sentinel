@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import AwareDatetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.core.security import require_analyst
 from app.models.models import ReplayRun
 from app.models.schemas import TradingEventCreate
 from app.services.generator import SyntheticDataGenerator
 from app.services.ingestion import IngestionService
 
-router = APIRouter(prefix="/api/replay", tags=["replay"])
+router = APIRouter(prefix="/api/replay", tags=["replay"], dependencies=[Depends(require_analyst)])
 
 
 @router.post("/{scenario}")

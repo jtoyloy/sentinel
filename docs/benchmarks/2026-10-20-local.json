@@ -1,0 +1,73 @@
+{
+  "measurement": "sequential synthetic mixed replay over real HTTP/database/Redis worker",
+  "client_platform": "macOS-26.5-arm64-arm-64bit",
+  "runs": 3,
+  "elapsed_seconds": 6.77,
+  "samples": [
+    {
+      "run_id": "3fbe93cd-4e71-4e43-ba41-1d512a394482",
+      "events": 112,
+      "persist_ms": 239.867,
+      "alert_observed_ms": 1560.784,
+      "pipeline_drained_ms": 2093.062,
+      "matching_alerts_by_run_namespace": 2
+    },
+    {
+      "run_id": "27e95a9c-563c-4d02-91d8-513faa0d6230",
+      "events": 112,
+      "persist_ms": 200.16,
+      "alert_observed_ms": 1687.198,
+      "pipeline_drained_ms": 2226.019,
+      "matching_alerts_by_run_namespace": 2
+    },
+    {
+      "run_id": "e540f320-2540-4dc8-9b3a-f9da3912a99e",
+      "events": 112,
+      "persist_ms": 192.005,
+      "alert_observed_ms": 1520.247,
+      "pipeline_drained_ms": 2176.225,
+      "matching_alerts_by_run_namespace": 2
+    }
+  ],
+  "persist_p50_ms": 200.16,
+  "persist_p95_ms": 239.867,
+  "alert_observed_p95_ms": 1687.198,
+  "pipeline_drained_p95_ms": 2226.019,
+  "events_per_second_observed": 49.632,
+  "client_cpu_seconds": 0.227,
+  "client_peak_rss_native_units": 29818880,
+  "server_resources": "not instrumented; no server CPU or memory claim",
+  "initial_stats": {
+    "events": 1813,
+    "alerts": 30,
+    "open_alerts": 30,
+    "critical_alerts": 15
+  },
+  "final_stats": {
+    "events": 2149,
+    "alerts": 36,
+    "open_alerts": 36,
+    "critical_alerts": 18
+  },
+  "operations": {
+    "postgres": true,
+    "redis": true,
+    "worker_healthy": true,
+    "stream_last_id": "1792514740629-2",
+    "outbox_pending": 0,
+    "stream_length": 2149,
+    "cursor": "1792514740629-2",
+    "worker": {
+      "name": "detection-v1",
+      "last_success": "2026-10-20T16:45:41.592987+00:00",
+      "last_failure": null,
+      "processed": 1690,
+      "failures": 0,
+      "last_error": null
+    },
+    "events": 2149,
+    "stream_failures": [],
+    "feed_issue_count": 2
+  },
+  "limitations": "Sequential smoke workload waiting for per-run alerts and full outbox/stream cursor drain; 100ms polling granularity; retained history affects detection cost; not a capacity benchmark."
+}

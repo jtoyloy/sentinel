@@ -1,16 +1,22 @@
 """Run against an already running PostgreSQL/Redis/API stack (adds replay data)."""
 import asyncio
 import json
+import os
 import httpx
 import websockets
 
 
 async def main():
     async with httpx.AsyncClient(base_url="http://127.0.0.1:8000", timeout=20) as client:
+        username, password = os.getenv("SENTINEL_USERNAME"), os.getenv("SENTINEL_PASSWORD")
+        if not username or not password:
+            raise RuntimeError("Set SENTINEL_USERNAME and SENTINEL_PASSWORD for a provisioned analyst/admin")
+        login = await client.post("/api/auth/login", json={"username": username, "password": password})
+        login.raise_for_status()
         health = await client.get("/health")
         assert health.status_code == 200, health.text
         before = (await client.get("/api/stats")).json()
-        async with websockets.connect("ws://127.0.0.1:8000/ws/alerts") as ws:
+        async with websockets.connect("ws://127.0.0.1:8000/ws/alerts", extra_headers={"Cookie": "; ".join(f"{key}={value}" for key,value in client.cookies.items())}) as ws:
             response = await client.post("/api/replay/mixed", params={"seed": 42})
             assert response.status_code == 200, response.text
             run = response.json()

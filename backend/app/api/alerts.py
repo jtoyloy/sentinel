@@ -5,11 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
 from app.core.database import get_db
+from app.core.security import require_reader, require_analyst
 from app.models.models import Alert, TradingEvent, AlertAudit
 from app.models.schemas import AlertResponse, TradingEventResponse, AlertUpdate, AuditResponse
 from app.services.alerting import AlertingService
 
-router = APIRouter(prefix="/api/alerts", tags=["alerts"])
+router = APIRouter(prefix="/api/alerts", tags=["alerts"], dependencies=[Depends(require_reader)])
 service = AlertingService()
 
 
@@ -44,12 +45,12 @@ async def evidence(alert_id: UUID, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{alert_id}", response_model=AlertResponse)
-async def update_alert(alert_id: UUID, update: AlertUpdate, db: AsyncSession = Depends(get_db)):
+async def update_alert(alert_id: UUID, update: AlertUpdate, db: AsyncSession = Depends(get_db), user=Depends(require_analyst)):
     alert = await find_alert(db, alert_id, lock=True)
     db.add(AlertAudit(alert_id=alert_id, previous_status=alert.status,
-                      new_status=update.status, actor=update.actor, notes=update.notes))
+                      new_status=update.status, actor=user.username, notes=update.notes))
     alert.status = update.status
-    alert.assigned_to = update.actor
+    alert.assigned_to = user.username
     alert.resolution_notes = update.notes
     alert.resolved_at = datetime.now(timezone.utc) if update.status in ("RESOLVED", "FALSE_POSITIVE") else None
     await db.commit()

@@ -39,6 +39,7 @@ class TradingEventResponse(BaseModel):
     order_id: str
     parent_order_id: Optional[str]
     metadata: dict = Field(validation_alias="event_metadata", default_factory=dict)
+    source_metadata: Optional[dict] = None
     created_at: datetime
 
 
@@ -63,7 +64,7 @@ class AlertResponse(BaseModel):
 
 class AlertUpdate(BaseModel):
     status: Status
-    actor: str = Field(min_length=1, max_length=100, pattern=r"\S")
+    actor: Optional[str] = Field(None, min_length=1, max_length=100, pattern=r"\S")
     notes: str = Field(min_length=1, max_length=4000, pattern=r"\S")
 
 

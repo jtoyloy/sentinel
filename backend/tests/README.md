@@ -23,3 +23,11 @@ WebSocket alerts, exact persisted evidence and investigator history (adds data):
 ```sh
 backend/venv/bin/python backend/tests/live_smoke.py
 ```
+
+
+V2 adds employees, communication evidence/both correlation arrival orders,
+policy/exemption snapshots, broker normalization/reconciliation/reporting,
+authentication, investigations and recovery. The full suite has 104 tests.
+Frozen PostgreSQL migrations/triggers are separately checked on a disposable DB.
+Live HTTP/WebSocket and isolated fault scripts are in scripts/. See
+../../docs/VALIDATION.md for actual observations and limitations.
